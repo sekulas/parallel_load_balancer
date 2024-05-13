@@ -7,6 +7,7 @@
 #define THREAD_NUMBER 2
 #define MAX_TASKS 100
 #define PORT 8080
+#define MAX_CONNECTIONS 10
 
 
 typedef struct Task {
@@ -91,7 +92,7 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    if(listen(server_fd, 10) < 0) { //max 10 connections
+    if(listen(server_fd, MAX_CONNECTIONS) < 0) {
         fprintf(stderr, "Bind failed!");  
         exit(EXIT_FAILURE);
     }
