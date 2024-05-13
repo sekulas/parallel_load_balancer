@@ -6,7 +6,7 @@
 
 #define THREAD_NUMBER 2
 #define MAX_TASKS 100
-#define PORT 8681
+#define PORT 8080
 
 
 typedef struct Task {
@@ -96,24 +96,23 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    int got_requests_n = 0; //TODO: for dev only
-    while(got_requests_n < 2) {
+    int client_id;
+
+    while(1) {
         struct sockaddr_in client_addr;
         socklen_t client_addr_len = sizeof(client_addr);
-        int client_id;
 
         if((client_id = accept(server_fd, (struct sockaddr *)&client_addr, &client_addr_len)) < 0) {
             fprintf(stderr, "Accept failed!");
             continue;
         }
-        printf("Client_id: %d\n", client_id);
 
-        Task task;
-        task.client_id = client_id;
-        task.fun = handle_tcp_connection;
+        Task task = {client_id, handle_tcp_connection};
         submit_task(task_queue, task);
-        printf("GOT Request: %d\n", got_requests_n++);
     }
+    
     close(server_fd);
     free(task_queue);
+    pthread_mutex_destroy(&mutex);
+    pthread_cond_destroy(&task_cond);
 }
