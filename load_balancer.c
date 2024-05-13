@@ -36,15 +36,14 @@ void *handle_request(void *args) {
     Task task;
     while(1) {
         pthread_mutex_lock(&mutex);
-        if(task_queue->task_count != 0) {
-            task = task_queue->queue[--task_queue->task_count];
-            pthread_mutex_unlock(&mutex);
-            printf("Thread: client_id: %d\n", task.client_id);
-            if(task.fun != NULL) {
-                task.fun(task.client_id);
-            }
-        } else {
-            pthread_mutex_unlock(&mutex);
+        while (task_queue->task_count == 0) {
+            pthread_cond_wait(&task_cond, &mutex);
+        }
+        task = task_queue->queue[--task_queue->task_count];
+        pthread_mutex_unlock(&mutex);
+        printf("Thread: client_id: %d\n", task.client_id);
+        if(task.fun != NULL) {
+            task.fun(task.client_id);
         }
     }
     return NULL;
@@ -63,6 +62,7 @@ void intialize_thread_pool(Task_Queue *task_queue) {
 void submit_task(Task_Queue *task_queue, Task t) {
     pthread_mutex_lock(&mutex);
     task_queue->queue[task_queue->task_count++] = t;
+    pthread_cond_signal(&task_cond);
     pthread_mutex_unlock(&mutex);
 }
 
