@@ -25,26 +25,26 @@ pthread_cond_t task_cond = PTHREAD_COND_INITIALIZER;
 //mock server
 void handle_tcp_connection(int client_id) {
     //lb algorithm
-    printf("client_id: %d\n", client_id);
+    printf("Handled client_id: %d\n", client_id);
     send(client_id, "RESPONSE", 8, 0);
     close(client_id);
 }
 
 
-void *handle_thread_pool(void *args) {
+void *handle_request(void *args) {
     Task_Queue *task_queue = (Task_Queue*) args;
+    Task task;
     while(1) {
         pthread_mutex_lock(&mutex);
-        Task task;
         if(task_queue->task_count != 0) {
             task = task_queue->queue[--task_queue->task_count];
+            pthread_mutex_unlock(&mutex);
             printf("Thread: client_id: %d\n", task.client_id);
-
-        }
-        pthread_mutex_unlock(&mutex);
-        if(task.fun != NULL) {
-            // printf("Jestem w task.fun!\n");
-            task.fun(task.client_id);
+            if(task.fun != NULL) {
+                task.fun(task.client_id);
+            }
+        } else {
+            pthread_mutex_unlock(&mutex);
         }
     }
     return NULL;
@@ -53,7 +53,7 @@ void *handle_thread_pool(void *args) {
 void intialize_thread_pool(Task_Queue *task_queue) {
     pthread_t thread_id[THREAD_NUMBER];
     for(int i=0; i<THREAD_NUMBER; i++) {
-        if(pthread_create(&thread_id[i], NULL, handle_thread_pool, (void *)task_queue) < 0) {
+        if(pthread_create(&thread_id[i], NULL, handle_request, (void *)task_queue) < 0) {
             fprintf(stderr, "Thread creation failed!");
             continue;
         }
@@ -96,25 +96,24 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    while(1) {
+    int got_requests_n = 0; //TODO: for dev only
+    while(got_requests_n < 2) {
         struct sockaddr_in client_addr;
         socklen_t client_addr_len = sizeof(client_addr);
-        int *client_id = malloc(sizeof(int));
+        int client_id;
 
-        if((*client_id = accept(server_fd, (struct sockaddr *)&client_addr, &client_addr_len)) < 0) {
+        if((client_id = accept(server_fd, (struct sockaddr *)&client_addr, &client_addr_len)) < 0) {
             fprintf(stderr, "Accept failed!");
             continue;
         }
-        printf("Client_id: %d\n", *client_id);
+        printf("Client_id: %d\n", client_id);
 
         Task task;
-        task.client_id = *client_id;
+        task.client_id = client_id;
         task.fun = handle_tcp_connection;
         submit_task(task_queue, task);
-
-        close(client_id);
-        free(client_id);
+        printf("GOT Request: %d\n", got_requests_n++);
     }
-    // close(server_fd);
+    close(server_fd);
     free(task_queue);
 }
