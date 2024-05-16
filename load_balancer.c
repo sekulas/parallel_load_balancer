@@ -3,12 +3,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h> 
 #include <pthread.h>
-
-#define THREAD_NUMBER 2
-#define MAX_TASKS 100
-#define PORT 8080
-#define MAX_CONNECTIONS 10
-
+#include "server_parser.h"
+#include "config.h"
 
 typedef struct Task {
     int client_id;
@@ -23,14 +19,24 @@ typedef struct Task_Queue {
 pthread_mutex_t	mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t task_cond = PTHREAD_COND_INITIALIZER;
 
-//mock server
+char** servers_ip = NULL;
+int current_server = 0;
+pthread_mutex_t rr_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+char* get_next_server_ip() {
+    pthread_mutex_lock(&rr_mutex);
+    char* server_ip = servers_ip[current_server];
+    current_server = (current_server + 1) % SERVER_AMOUNT;
+    pthread_mutex_unlock(&rr_mutex);
+    return server_ip;
+}
+
 void handle_tcp_connection(int client_id) {
-    //lb algorithm
-    printf("Handled client_id: %d\n", client_id);
+    char* server_ip = get_next_server_ip();
+    printf("Handled client_id: %d, Server IP: %s\n", client_id, server_ip);
     send(client_id, "RESPONSE", 8, 0);
     close(client_id);
 }
-
 
 void *handle_request(void *args) {
     Task_Queue *task_queue = (Task_Queue*) args;
@@ -68,6 +74,12 @@ void submit_task(Task_Queue *task_queue, Task t) {
 }
 
 int main(int argc, char **argv) {
+
+    servers_ip = parse_server_ips();
+    if (servers_ip == NULL) {
+        fprintf(stderr, "Failed to parse server IPs\n");
+        return EXIT_FAILURE;
+    }
 
     Task_Queue *task_queue;
     task_queue = malloc(sizeof(Task_Queue));
