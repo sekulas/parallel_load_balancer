@@ -27,7 +27,7 @@ char** parse_server_ips() {
         return NULL;
     }
     
-    char** ips = malloc(DEFAULT_SERVER_AMOUNT * sizeof(char*));
+    char** ips = malloc(SERVER_AMOUNT * sizeof(char*));
     if (!ips) {
         perror("Error allocating memory");
         fclose(file);
@@ -36,7 +36,7 @@ char** parse_server_ips() {
 
     char* line = malloc(MAX_IP_LEN);
 
-    for(int i = 0; i < DEFAULT_SERVER_AMOUNT; i++) {
+    for(int i = 0; i < SERVER_AMOUNT; i++) {
         fgets(line, MAX_IP_LEN, file);
         line = remove_newline_from_ip(line);
         ips[i] = strdup(line);
