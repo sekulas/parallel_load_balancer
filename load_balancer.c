@@ -3,12 +3,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h> 
 #include <pthread.h>
-
-#define THREAD_NUMBER 2
-#define MAX_TASKS 100
-#define PORT 8080
-#define MAX_CONNECTIONS 10
-
+#include "server_parser.h"
+#include "config.h"
 
 typedef struct Task {
     int client_id;
@@ -69,6 +65,7 @@ void submit_task(Task_Queue *task_queue, Task t) {
 
 int main(int argc, char **argv) {
 
+    parse_servers();
     Task_Queue *task_queue;
     task_queue = malloc(sizeof(Task_Queue));
     task_queue->task_count = 0;
