@@ -65,7 +65,12 @@ void submit_task(Task_Queue *task_queue, Task t) {
 
 int main(int argc, char **argv) {
 
-    parse_servers();
+    char** servers_ip = parse_server_ips();
+    if (servers_ip == NULL) {
+        fprintf(stderr, "Failed to parse server IPs\n");
+        return EXIT_FAILURE;
+    }
+
     Task_Queue *task_queue;
     task_queue = malloc(sizeof(Task_Queue));
     task_queue->task_count = 0;
