@@ -1,42 +1,29 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h> 
+#include <arpa/inet.h>
 #include <pthread.h>
+#include <openssl/sha.h>
 #include "server_parser.h"
+#include "request_handler.h"
 #include "../config/config.h"
 
 typedef struct Task {
     int client_id;
-    void (*fun)(int);
+    char* client_ip;
+    void (*fun)(int, char*, char**);
 } Task;
 
 typedef struct Task_Queue {
     Task queue[MAX_TASKS];
     int task_count;
+    char** servers_ip;
 } Task_Queue;
 
 pthread_mutex_t	mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t task_cond = PTHREAD_COND_INITIALIZER;
-
-char** servers_ip = NULL;
-int current_server = 0;
-pthread_mutex_t rr_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-char* get_next_server_ip() {
-    pthread_mutex_lock(&rr_mutex);
-    char* server_ip = servers_ip[current_server];
-    current_server = (current_server + 1) % SERVER_AMOUNT;
-    pthread_mutex_unlock(&rr_mutex);
-    return server_ip;
-}
-
-void handle_tcp_connection(int client_id) {
-    char* server_ip = get_next_server_ip();
-    printf("Handled client_id: %d, Server IP: %s\n", client_id, server_ip);
-    send(client_id, "RESPONSE", 8, 0);
-    close(client_id);
-}
 
 void *handle_request(void *args) {
     Task_Queue *task_queue = (Task_Queue*) args;
@@ -50,7 +37,7 @@ void *handle_request(void *args) {
         pthread_mutex_unlock(&mutex);
         printf("Thread: client_id: %d\n", task.client_id);
         if(task.fun != NULL) {
-            task.fun(task.client_id);
+            task.fun(task.client_id, task.client_ip, task_queue->servers_ip);
         }
     }
     return NULL;
@@ -74,8 +61,8 @@ void submit_task(Task_Queue *task_queue, Task t) {
 }
 
 int main(int argc, char **argv) {
-
-    servers_ip = parse_server_ips();
+    char client_ip[INET_ADDRSTRLEN];
+    char** servers_ip = parse_server_ips();
     if (servers_ip == NULL) {
         fprintf(stderr, "Failed to parse server IPs\n");
         return EXIT_FAILURE;
@@ -84,6 +71,7 @@ int main(int argc, char **argv) {
     Task_Queue *task_queue;
     task_queue = malloc(sizeof(Task_Queue));
     task_queue->task_count = 0;
+    task_queue->servers_ip = servers_ip;
 
     intialize_thread_pool(task_queue);
 
@@ -120,7 +108,10 @@ int main(int argc, char **argv) {
             continue;
         }
 
-        Task task = {client_id, handle_tcp_connection};
+        inet_ntop(AF_INET, &(client_addr.sin_addr), client_ip, INET_ADDRSTRLEN);
+        printf("Handled client with ip address: %s\n", client_ip);
+
+        Task task = {client_id, client_ip, pass_request_to_server};
         submit_task(task_queue, task);
     }
     

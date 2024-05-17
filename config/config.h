@@ -10,4 +10,6 @@
 #define FILE_WITH_SERVERS "config/available_servers"
 #define MAX_IP_LEN 15
 
+#define LOAD_BALANCING_ALGORITHM ROUND_ROBIN
+
 #endif
