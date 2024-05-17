@@ -4,7 +4,7 @@
 #include <netinet/in.h> 
 #include <pthread.h>
 #include "server_parser.h"
-#include "config.h"
+#include "../config/config.h"
 
 typedef struct Task {
     int client_id;

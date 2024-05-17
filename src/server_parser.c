@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "config.h"
+#include "../config/config.h"
 
 void free_server_ips(char** ips, int server_amount) {
     for (int i = 0; i < server_amount; i++) {

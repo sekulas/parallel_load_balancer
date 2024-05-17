@@ -7,7 +7,7 @@
 #define MAX_CONNECTIONS 10
 
 #define SERVER_AMOUNT 10
-#define FILE_WITH_SERVERS "available_servers"
+#define FILE_WITH_SERVERS "config/available_servers"
 #define MAX_IP_LEN 15
 
 #endif
