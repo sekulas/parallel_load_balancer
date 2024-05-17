@@ -5,7 +5,6 @@
 #include <netinet/in.h> 
 #include <arpa/inet.h>
 #include <pthread.h>
-#include <openssl/sha.h>
 #include "server_parser.h"
 #include "request_handler.h"
 #include "../config/config.h"
