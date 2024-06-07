@@ -55,8 +55,14 @@ char* ip_hash_algorithm(char* client_ip, char** servers_ip) {
     return server_ip;
 }
 
-void pass_request_to_server(int client_id, char* client_ip, char** servers_ip) {
-    char* server_ip = ip_hash_algorithm(client_ip, servers_ip);
+void pass_request_to_server(int client_id, char* client_ip, char** servers_ip, char* load_balancing_algorithm) {
+    char* server_ip;
+    if(strcmp(load_balancing_algorithm, "ROUND_ROBIN") == 0) {
+        server_ip = round_robin_algorithm(servers_ip);
+    } else {
+        server_ip = ip_hash_algorithm(client_ip, servers_ip);
+    }
+
     printf("Handled client_id: %d, Server IP: %s\n", client_id, server_ip);
     send(client_id, "RESPONSE", 8, 0);
     close(client_id);

@@ -7,12 +7,16 @@
 #include <pthread.h>
 #include "server_parser.h"
 #include "request_handler.h"
+#include "argument_handler.h"
 #include "../config/config.h"
+
+#define MAX_ALGORITHM_NAME_SIZE 100
 
 typedef struct Task {
     int client_id;
     char* client_ip;
-    void (*fun)(int, char*, char**);
+    void (*fun)(int, char*, char**, char*);
+    char* load_balancing_alghorithm;
 } Task;
 
 typedef struct Task_Queue {
@@ -36,15 +40,15 @@ void *handle_request(void *args) {
         pthread_mutex_unlock(&mutex);
         printf("Thread: client_id: %d\n", task.client_id);
         if(task.fun != NULL) {
-            task.fun(task.client_id, task.client_ip, task_queue->servers_ip);
+            task.fun(task.client_id, task.client_ip, task_queue->servers_ip, task.load_balancing_alghorithm);
         }
     }
     return NULL;
 }
 
-void intialize_thread_pool(Task_Queue *task_queue) {
-    pthread_t thread_id[THREAD_NUMBER];
-    for(int i=0; i<THREAD_NUMBER; i++) {
+void intialize_thread_pool(Task_Queue *task_queue, int thread_number) {
+    pthread_t thread_id[thread_number];
+    for(int i=0; i<thread_number; i++) {
         if(pthread_create(&thread_id[i], NULL, handle_request, (void *)task_queue) < 0) {
             fprintf(stderr, "Thread creation failed!");
             continue;
@@ -60,6 +64,14 @@ void submit_task(Task_Queue *task_queue, Task t) {
 }
 
 int main(int argc, char **argv) {
+    int thread_number;
+    char* load_balancing_algorithm = malloc(sizeof(char) * MAX_ALGORITHM_NAME_SIZE); 
+
+    parse_arguments(argc, argv, &thread_number, load_balancing_algorithm);  
+
+    printf("Number of threads: %d\n", thread_number);
+    printf("Load balancing algorithm: %s\n", load_balancing_algorithm);
+
     char client_ip[INET_ADDRSTRLEN];
     char** servers_ip = parse_server_ips();
     if (servers_ip == NULL) {
@@ -72,7 +84,7 @@ int main(int argc, char **argv) {
     task_queue->task_count = 0;
     task_queue->servers_ip = servers_ip;
 
-    intialize_thread_pool(task_queue);
+    intialize_thread_pool(task_queue, thread_number);
 
     int server_fd;
     struct sockaddr_in server_addr;
@@ -110,7 +122,7 @@ int main(int argc, char **argv) {
         inet_ntop(AF_INET, &(client_addr.sin_addr), client_ip, INET_ADDRSTRLEN);
         printf("Handled client with ip address: %s\n", client_ip);
 
-        Task task = {client_id, client_ip, pass_request_to_server};
+        Task task = {client_id, client_ip, pass_request_to_server, load_balancing_algorithm};
         submit_task(task_queue, task);
     }
     
