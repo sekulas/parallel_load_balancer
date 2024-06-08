@@ -4,10 +4,10 @@
 #include "../config/config.h"
 
 
-void parse_arguments(int argc, char **argv, int* thread_number, char* load_balancing_alghorithm) {
+void parse_arguments(int argc, char **argv, int* thread_number, char* load_balancing_alghorithm, int* is_sync_load_balancer) {
     *thread_number = DEFAULT_NUMBER_OF_THREADS;
     strcpy(load_balancing_alghorithm, DEFAULT_LOAD_BALANCING_ALGORITHM);
-
+    
     for(int i=1; i<argc; i++) {
         if(strcmp(argv[i], "-n") == 0) {
             if(i + 1 < argc) {
@@ -36,6 +36,11 @@ void parse_arguments(int argc, char **argv, int* thread_number, char* load_balan
             } else {
                 fprintf(stderr, "-alg flag requires value! Default load balacing algorithm is taken: %s\n", DEFAULT_LOAD_BALANCING_ALGORITHM);
             }
+        }
+
+        if(strcmp(argv[i], "-sync") == 0) {
+            printf("Thread numbers are ignored, load balancer is into synchronous mode!\n");
+            *is_sync_load_balancer = 1;
         }
     }
     

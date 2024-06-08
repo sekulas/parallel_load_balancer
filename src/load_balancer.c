@@ -65,11 +65,15 @@ void submit_task(Task_Queue *task_queue, Task t) {
 
 int main(int argc, char **argv) {
     int thread_number;
+    int is_sync_load_balancer = 0;  //synchronous mode(1) trigger only main thread
     char* load_balancing_algorithm = malloc(sizeof(char) * MAX_ALGORITHM_NAME_SIZE); 
 
-    parse_arguments(argc, argv, &thread_number, load_balancing_algorithm);  
+    parse_arguments(argc, argv, &thread_number, load_balancing_algorithm, &is_sync_load_balancer);  
 
-    printf("Number of threads: %d\n", thread_number);
+    if(is_sync_load_balancer == 0) {
+        printf("Number of threads: %d\n", thread_number);
+    }
+
     printf("Load balancing algorithm: %s\n", load_balancing_algorithm);
 
     char client_ip[INET_ADDRSTRLEN];
@@ -80,11 +84,13 @@ int main(int argc, char **argv) {
     }
 
     Task_Queue *task_queue;
-    task_queue = malloc(sizeof(Task_Queue));
-    task_queue->task_count = 0;
-    task_queue->servers_ip = servers_ip;
 
-    intialize_thread_pool(task_queue, thread_number);
+    if(is_sync_load_balancer == 0) {
+        task_queue = malloc(sizeof(Task_Queue));
+        task_queue->task_count = 0;
+        task_queue->servers_ip = servers_ip;
+        intialize_thread_pool(task_queue, thread_number);
+    }
 
     int server_fd;
     struct sockaddr_in server_addr;
@@ -122,12 +128,20 @@ int main(int argc, char **argv) {
         inet_ntop(AF_INET, &(client_addr.sin_addr), client_ip, INET_ADDRSTRLEN);
         printf("Handled client with ip address: %s\n", client_ip);
 
-        Task task = {client_id, client_ip, pass_request_to_server, load_balancing_algorithm};
-        submit_task(task_queue, task);
+
+        if(is_sync_load_balancer == 0) {
+            Task task = {client_id, client_ip, pass_request_to_server, load_balancing_algorithm};
+            submit_task(task_queue, task);
+        } else {
+            pass_request_to_server(client_id, client_ip, servers_ip, load_balancing_algorithm);
+        }
     }
-    
+
     close(server_fd);
-    free(task_queue);
+    if(is_sync_load_balancer == 0) {
+        free(task_queue);
+    }
+    free(load_balancing_algorithm);
     pthread_mutex_destroy(&mutex);
     pthread_cond_destroy(&task_cond);
 }
