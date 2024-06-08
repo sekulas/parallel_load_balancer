@@ -20,9 +20,9 @@ Example run:
 ./loadBalancer -sync
 ```
 The program allows running with three flags (if no or incorrect values are specified, the default configuration is used):
--n - specify the number of threads.
--alg - specify the load balancing algorithm (ROUND_ROBIN or IP_HASH).
--sync - run the load balancer fully synchronously.
+- n - specify the number of threads.
+- alg - specify the load balancing algorithm (ROUND_ROBIN or IP_HASH).
+- sync - run the load balancer fully synchronously.
 
 ## Measure Load Balancer Performance
 
