@@ -64,6 +64,7 @@ void pass_request_to_server(int client_id, char* client_ip, char** servers_ip, c
     }
 
     printf("Handled client_id: %d, Server IP: %s\n", client_id, server_ip);
-    send(client_id, "RESPONSE", 8, 0);
+    send(client_id, "RESPONSE\n", 8, 0);
+    shutdown(client_id, SHUT_RDWR);
     close(client_id);
 }
