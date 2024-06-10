@@ -1,0 +1,17 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+#define MAX_NUMBER_OF_THREADS 100
+#define DEFAULT_NUMBER_OF_THREADS 10
+
+#define MAX_TASKS 100
+#define PORT 8080
+#define MAX_CONNECTIONS 10
+
+#define SERVER_AMOUNT 10
+#define FILE_WITH_SERVERS "config/available_servers"
+#define MAX_IP_LEN 15
+
+#define DEFAULT_LOAD_BALANCING_ALGORITHM "ROUND_ROBIN"
+
+#endif
