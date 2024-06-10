@@ -16,8 +16,8 @@ make clean
 
 Example run:
 ```
-./loadBalancer -n 10 -alg ROUND_ROBIN
-./loadBalancer -sync
+./load_balancer -n 10 -alg ROUND_ROBIN
+./load_balancer -sync
 ```
 The program allows running with three flags (if no or incorrect values are specified, the default configuration is used):
 - n - specify the number of threads.
