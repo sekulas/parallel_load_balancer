@@ -38,7 +38,7 @@ void *handle_request(void *args) {
         }
         task = task_queue->queue[--task_queue->task_count];
         pthread_mutex_unlock(&mutex);
-        printf("Thread: client_id: %d\n", task.client_id);
+        //printf("Thread: client_id: %d\n", task.client_id);
         if(task.fun != NULL) {
             task.fun(task.client_id, task.client_ip, task_queue->servers_ip, task.load_balancing_alghorithm);
         }
@@ -126,7 +126,7 @@ int main(int argc, char **argv) {
         }
 
         inet_ntop(AF_INET, &(client_addr.sin_addr), client_ip, INET_ADDRSTRLEN);
-        printf("Handled client with ip address: %s\n", client_ip);
+        //printf("Handled client with ip address: %s\n", client_ip);
 
 
         if(is_sync_load_balancer == 0) {
